@@ -68,13 +68,15 @@ type TextElementOptions = {
 function textElement(opts: TextElementOptions, uuid: string) {
   const rtf = buildRtf(opts.text, { fontSize: opts.fontSize, bold: opts.bold === true });
   const data = toBase64(rtf);
-  const shape = `{${opts.x} ${opts.y} 0}{${opts.width} ${opts.height}}`;
-  return `        <RVTextElement displayName="${xmlEscape(opts.name)}" UUID="${uuid}" typeID="0" displayDelay="0" locked="false" persistent="0" fromTemplate="false" opacity="1" source="" bezelRadius="0" rotation="0" drawingFill="false" drawingShadow="false" drawingStroke="false" fillColor="0 0 0 0" adjustsHeightToFit="false" verticalAlignment="${opts.verticalAlign}" revealType="0" position="${shape}" RTFData="${data}" RTFData64="${data}">
-          <_-D-_serializedShapeElement>
-            <RVRect3D rvXMLIvarName="origin">${shape}</RVRect3D>
-            <shapeKey>0</shapeKey>
-          </_-D-_serializedShapeElement>
-        </RVTextElement>`;
+  const rect = `{${opts.x} ${opts.y} 0 ${opts.width} ${opts.height}}`;
+  return `          <RVTextElement displayName="${xmlEscape(opts.name)}" UUID="${uuid}" typeID="0" displayDelay="0" locked="false" persistent="0" fromTemplate="false" opacity="1" source="" bezelRadius="0" rotation="0" drawingFill="false" drawingShadow="false" drawingStroke="false" fillColor="0 0 0 0" adjustsHeightToFit="false" verticalAlignment="${opts.verticalAlign}" revealType="0" RTFData="${data}">
+            <RVRect3D rvXMLIvarName="position">${rect}</RVRect3D>
+            <shadow rvXMLIvarName="shadow">0.000000|0 0 0 0.3333333333333333|{4, -4}</shadow>
+            <dictionary rvXMLIvarName="stroke">
+              <NSColor rvXMLDictionaryKey="RVShapeElementStrokeColorKey">0 0 0 1</NSColor>
+              <NSNumber rvXMLDictionaryKey="RVShapeElementStrokeWidthKey" hint="double">0.000000</NSNumber>
+            </dictionary>
+          </RVTextElement>`;
 }
 
 function uuid(seed: number, part: number) {
@@ -83,13 +85,14 @@ function uuid(seed: number, part: number) {
 }
 
 function slide(index: number, elements: string[], label: string) {
-  return `    <RVDisplaySlide backgroundColor="0 0 0 1" enabled="true" highlightColor="0 0 0 0" hotKey="" label="${xmlEscape(label)}" notes="" slideType="1" sort_index="${index}" UUID="${uuid(index, 1)}" drawingBackgroundColor="false" chordChartPath="" serialization-array-index="${index}">
-      <array rvXMLIvarName="cues"></array>
-      <array rvXMLIvarName="displayElements">
+  return `        <RVDisplaySlide backgroundColor="0 0 0 1" enabled="true" highlightColor="0 0 0 0" hotKey="" label="${xmlEscape(label)}" notes="" slideType="1" sort_index="${index}" UUID="${uuid(index, 1)}" drawingBackgroundColor="false" chordChartPath="" serialization-array-index="${index}">
+          <array rvXMLIvarName="cues"></array>
+          <array rvXMLIvarName="displayElements">
 ${elements.join("\n")}
-      </array>
-    </RVDisplaySlide>`;
+          </array>
+        </RVDisplaySlide>`;
 }
+
 
 export type SlideInput =
   | { kind: "headline"; text: string }
