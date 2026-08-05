@@ -24,6 +24,7 @@ export type ParsedReference = {
   chapter: number;
   from: number;
   to: number;
+  index: number;
 };
 
 export function findReferences(line: string): ParsedReference[] {
@@ -38,10 +39,12 @@ export function findReferences(line: string): ParsedReference[] {
       chapter: Number(match[2]!),
       from,
       to: match[4] ? Number(match[4]) : from,
+      index: match.index,
     });
   }
   return out;
 }
+
 
 export function smartImport(text: string, translation: Translation | undefined): Block[] {
   const blocks: Block[] = [];
