@@ -24,6 +24,7 @@ export type ParsedReference = {
   chapter: number;
   from: number;
   to: number;
+  index: number;
 };
 
 export function findReferences(line: string): ParsedReference[] {
@@ -38,10 +39,12 @@ export function findReferences(line: string): ParsedReference[] {
       chapter: Number(match[2]!),
       from,
       to: match[4] ? Number(match[4]) : from,
+      index: match.index,
     });
   }
   return out;
 }
+
 
 export function smartImport(text: string, translation: Translation | undefined): Block[] {
   const blocks: Block[] = [];
@@ -58,11 +61,13 @@ export function smartImport(text: string, translation: Translation | undefined):
       continue;
     }
 
-    // Keep any surrounding prose as a headline before the verse blocks
-    let remainder = line;
-    for (const ref of refs) remainder = remainder.replace(ref.raw, " ");
-    remainder = remainder.replace(/\s+/g, " ").replace(/^[\s\-–:•*,.]+|[\s\-–:•*,]+$/g, "").trim();
-    if (remainder.length > 2) blocks.push({ id: newId(), type: "headline", text: remainder });
+    // If the reference leads the line, the rest is the quoted verse text itself:
+    // don't turn it into a headline. Only prose *before* the first reference
+    // becomes a headline.
+    const leading = line.slice(0, refs[0]!.index);
+    const prefix = leading.replace(/\s+/g, " ").replace(/^[\s\-–:•*,.]+|[\s\-–:•*,.]+$/g, "").trim();
+    if (prefix.length > 2) blocks.push({ id: newId(), type: "headline", text: prefix });
+
 
     for (const ref of refs) {
       const book = findBook(translation, ref.book)!;
