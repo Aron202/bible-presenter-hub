@@ -101,16 +101,34 @@ export function normalize(value: string) {
   return value.toLocaleLowerCase("sv-SE").replace(/[.\s]/g, "");
 }
 
+const ORDINALS: Record<string, string> = {
+  "1": "första",
+  "2": "andra",
+  "3": "tredje",
+  "4": "fjärde",
+  "5": "femte",
+};
+
+/** "1 Mos" -> "förstamos", "Joh" -> "joh" */
+function expandQuery(name: string) {
+  const trimmed = name.trim();
+  const ordinal = trimmed.match(/^([1-5])\s*(.+)$/);
+  if (ordinal) return normalize(`${ORDINALS[ordinal[1]!]}${ordinal[2]!}`);
+  return normalize(trimmed);
+}
+
 export function findBook(translation: Translation | undefined, name: string): Book | undefined {
   if (!translation) return undefined;
-  const needle = normalize(name);
+  const needle = expandQuery(name);
+  if (!needle) return undefined;
   return (
     translation.books.find((b) => normalize(b.name) === needle) ??
-    translation.books.find((b) => normalize(b.name).includes(needle)) ??
+    translation.books.find((b) => normalize(b.name).startsWith(needle) && needle.length >= 3) ??
+    translation.books.find((b) => normalize(b.name).includes(needle) && needle.length >= 3) ??
     translation.books.find((b) => {
       const words = b.name.split(/\s+/);
       const last = normalize(words[words.length - 1]!);
-      return last.startsWith(needle) && needle.length >= 3;
+      return needle.length >= 3 && last.startsWith(needle);
     })
   );
 }
