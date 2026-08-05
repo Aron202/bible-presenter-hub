@@ -48,15 +48,15 @@ export function parseBibleText(raw: string): Book[] {
 
     const header = line.match(CHAPTER_HEADER);
     if (header) {
-      currentBook = titleCase(header[1].trim());
-      currentChapter = Number(header[2]);
+      currentBook = titleCase(header[1]!.trim());
+      currentChapter = Number(header[2]!);
       lastVerse = null;
       continue;
     }
 
     const verse = line.match(VERSE_LINE);
     if (verse && currentBook && currentChapter) {
-      lastVerse = { verse: Number(verse[1]), text: verse[2].trim() };
+      lastVerse = { verse: Number(verse[1]!), text: verse[2]!.trim() };
       push(currentBook, currentChapter, lastVerse);
       continue;
     }
@@ -109,7 +109,7 @@ export function findBook(translation: Translation | undefined, name: string): Bo
     translation.books.find((b) => normalize(b.name).includes(needle)) ??
     translation.books.find((b) => {
       const words = b.name.split(/\s+/);
-      const last = normalize(words[words.length - 1]);
+      const last = normalize(words[words.length - 1]!);
       return last.startsWith(needle) && needle.length >= 3;
     })
   );
