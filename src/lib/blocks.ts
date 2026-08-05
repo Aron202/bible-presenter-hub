@@ -48,8 +48,30 @@ export function findReferences(line: string): ParsedReference[] {
 
 export function smartImport(text: string, translation: Translation | undefined): Block[] {
   const blocks: Block[] = [];
-  for (const rawLine of text.replace(/\r\n?/g, "\n").split("\n")) {
-    const line = rawLine.trim();
+  const lines = text.replace(/\r\n?/g, "\n").split("\n");
+  const comparable = (value: string) =>
+    value
+      .normalize("NFKC")
+      .toLocaleLowerCase("sv-SE")
+      .replace(/^[\s\u00a0"'“”„«»‘’]+|[\s\u00a0"'“”„«»‘’]+$/g, "")
+      .replace(/[^a-zåäö0-9]+/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const matchesLibraryText = (candidate: string, refs: ParsedReference[]) => {
+    const pasted = comparable(candidate);
+    const expected = comparable(
+      refs
+        .flatMap((ref) => getVerses(translation, ref.book, ref.chapter, ref.from, ref.to))
+        .map((verse) => verse.text)
+        .join(" "),
+    );
+    return pasted.length >= 12 && expected.length >= 12 &&
+      (pasted === expected || pasted.includes(expected) || expected.includes(pasted));
+  };
+
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const line = lines[lineIndex]?.trim() ?? "";
     if (!line) continue;
 
     const refs = findReferences(line).filter(
@@ -70,7 +92,8 @@ export function smartImport(text: string, translation: Translation | undefined):
 
 
     for (const ref of refs) {
-      const book = findBook(translation, ref.book)!;
+      const book = findBook(translation, ref.book);
+      if (!book || !translation) continue;
       blocks.push({
         id: newId(),
         type: "verse",
@@ -78,8 +101,16 @@ export function smartImport(text: string, translation: Translation | undefined):
         chapter: ref.chapter,
         from: ref.from,
         to: ref.to,
-        translationId: translation!.id,
+        translationId: translation.id,
       });
+    }
+
+    const textOutsideReference = line.replace(REFERENCE, "").trim();
+    if (!textOutsideReference) {
+      let nextIndex = lineIndex + 1;
+      while (nextIndex < lines.length && !(lines[nextIndex]?.trim())) nextIndex += 1;
+      const nextLine = lines[nextIndex]?.trim() ?? "";
+      if (nextLine && matchesLibraryText(nextLine, refs)) lineIndex = nextIndex;
     }
   }
   return blocks;

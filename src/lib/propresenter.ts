@@ -4,7 +4,8 @@
 export function escapeRtf(text: string): string {
   let out = "";
   for (const char of text) {
-    const code = char.codePointAt(0)!;
+    const code = char.codePointAt(0);
+    if (code === undefined) continue;
     if (char === "\\" || char === "{" || char === "}") out += `\\${char}`;
     else if (char === "\n") out += "\\line ";
     else if (code < 128) out += char;
@@ -67,15 +68,19 @@ type TextElementOptions = {
 
 function textElement(opts: TextElementOptions, uuid: string) {
   const rtf = buildRtf(opts.text, { fontSize: opts.fontSize, bold: opts.bold === true });
-  const data = toBase64(rtf);
+  const plainTextData = toBase64(opts.text);
+  const rtfData = toBase64(rtf);
   const rect = `{${opts.x} ${opts.y} 0 ${opts.width} ${opts.height}}`;
-  return `          <RVTextElement displayName="${xmlEscape(opts.name)}" UUID="${uuid}" typeID="0" displayDelay="0" locked="false" persistent="0" fromTemplate="false" opacity="1" source="" bezelRadius="0" rotation="0" drawingFill="false" drawingShadow="false" drawingStroke="false" fillColor="0 0 0 0" adjustsHeightToFit="false" verticalAlignment="${opts.verticalAlign}" revealType="0" RTFData="${data}">
+  return `          <RVTextElement displayName="${xmlEscape(opts.name)}" UUID="${uuid}" typeID="0" displayDelay="0" locked="false" persistent="0" fromTemplate="false" opacity="1" source="" bezelRadius="0" rotation="0" drawingFill="false" drawingShadow="false" drawingStroke="false" fillColor="0 0 0 0" adjustsHeightToFit="false" verticalAlignment="${opts.verticalAlign}" revealType="0">
+            <RVTransition transitionType="0" transitionDirection="0" transitionDuration="1" motionEnabled="false" motionDuration="0" motionSpeed="0" groupIndex="0" orderIndex="0" slideBuildAction="0" slideBuildDelay="0" rvXMLIvarName="transitionInObject" />
             <RVRect3D rvXMLIvarName="position">${rect}</RVRect3D>
-            <shadow rvXMLIvarName="shadow">0.000000|0 0 0 0.3333333333333333|{4, -4}</shadow>
+            <shadow rvXMLIvarName="shadow">0|0 0 0 0.3333333333333333|{4, -4}</shadow>
             <dictionary rvXMLIvarName="stroke">
               <NSColor rvXMLDictionaryKey="RVShapeElementStrokeColorKey">0 0 0 1</NSColor>
-              <NSNumber rvXMLDictionaryKey="RVShapeElementStrokeWidthKey" hint="double">0.000000</NSNumber>
+              <NSNumber rvXMLDictionaryKey="RVShapeElementStrokeWidthKey" hint="double">0</NSNumber>
             </dictionary>
+            <NSString rvXMLIvarName="PlainText">${plainTextData}</NSString>
+            <NSString rvXMLIvarName="RTFData">${rtfData}</NSString>
           </RVTextElement>`;
 }
 
@@ -85,7 +90,7 @@ function uuid(seed: number, part: number) {
 }
 
 function slide(index: number, elements: string[], label: string) {
-  return `        <RVDisplaySlide backgroundColor="0 0 0 1" enabled="true" highlightColor="0 0 0 0" hotKey="" label="${xmlEscape(label)}" notes="" slideType="1" sort_index="${index}" UUID="${uuid(index, 1)}" drawingBackgroundColor="false" chordChartPath="" serialization-array-index="${index}">
+  return `        <RVDisplaySlide backgroundColor="0 0 0 1" enabled="true" highlightColor="0 0 0 0" hotKey="" label="${xmlEscape(label)}" notes="" UUID="${uuid(index, 1)}" drawingBackgroundColor="true" chordChartPath="">
           <array rvXMLIvarName="cues"></array>
           <array rvXMLIvarName="displayElements">
 ${elements.join("\n")}
@@ -164,12 +169,13 @@ export function buildPro6(inputs: SlideInput[]): string {
     );
   });
 
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<RVPresentationDocument height="${SLIDE_H}" width="${SLIDE_W}" versionNumber="600" docType="0" creatorCode="1349676880" lastDateUsed="${new Date().toISOString()}" usedCount="0" category="Sermon" resourcesDirectory="" backgroundColor="0 0 0 1" drawingBackgroundColor="false" notes="" artist="" author="" album="" CCLIDisplay="false" CCLIArtistCredits="" CCLISongTitle="Sermon" CCLIPublisher="" CCLICopyrightInfo="" CCLILicenseNumber="" chordChartPath="" os="1" buildNumber="6016">
-  <RVTimeline timeOffset="0" duration="0" selectedMediaTrackIndex="0" loop="false" rvXMLIvarName="timeline">
+  return `<?xml version="1.0" encoding="utf-8"?>
+<RVPresentationDocument height="${SLIDE_H}" width="${SLIDE_W}" versionNumber="600" docType="0" lastDateUsed="${new Date().toISOString()}" usedCount="0" selectedArrangementID="" category="Presentation" resourcesDirectory="" backgroundColor="0 0 0 1" drawingBackgroundColor="true" notes="" CCLIDisplay="false" chordChartPath="" os="1" buildNumber="6016">
+  <RVTimeline timeOffset="0" duration="0" selectedMediaTrackIndex="-1" loop="false" rvXMLIvarName="timeline">
     <array rvXMLIvarName="timeCues"></array>
     <array rvXMLIvarName="mediaTracks"></array>
   </RVTimeline>
+  <RVTransition transitionType="0" transitionDirection="0" transitionDuration="1" motionEnabled="false" motionDuration="0" motionSpeed="0" groupIndex="0" orderIndex="0" slideBuildAction="0" slideBuildDelay="0" rvXMLIvarName="transitionObject" />
   <array rvXMLIvarName="groups">
     <RVSlideGrouping name="Sermon" uuid="${uuid(999, 9)}" color="0 0 0 0" serialization-array-index="0">
       <array rvXMLIvarName="slides">
