@@ -1,4 +1,4 @@
-import { referenceLabel, type Block } from "./blocks";
+
 
 /** Escapes a string into RTF-safe syntax, converting non-ASCII to \uNNN? escapes. */
 export function escapeRtf(text: string): string {
@@ -66,7 +66,7 @@ type TextElementOptions = {
 };
 
 function textElement(opts: TextElementOptions, uuid: string) {
-  const rtf = buildRtf(opts.text, { fontSize: opts.fontSize, bold: opts.bold });
+  const rtf = buildRtf(opts.text, { fontSize: opts.fontSize, bold: opts.bold === true });
   const data = toBase64(rtf);
   const shape = `{${opts.x} ${opts.y} 0}{${opts.width} ${opts.height}}`;
   return `        <RVTextElement displayName="${xmlEscape(opts.name)}" UUID="${uuid}" typeID="0" displayDelay="0" locked="false" persistent="0" fromTemplate="false" opacity="1" source="" bezelRadius="0" rotation="0" drawingFill="false" drawingShadow="false" drawingStroke="false" fillColor="0 0 0 0" adjustsHeightToFit="false" verticalAlignment="${opts.verticalAlign}" revealType="0" position="${shape}" RTFData="${data}" RTFData64="${data}">
@@ -91,18 +91,22 @@ ${elements.join("\n")}
     </RVDisplaySlide>`;
 }
 
-export function buildPro6(blocks: Block[], translationName: string): string {
+export type SlideInput =
+  | { kind: "headline"; text: string }
+  | { kind: "verse"; text: string; label: string };
+
+export function buildPro6(inputs: SlideInput[]): string {
   const slides: string[] = [];
 
-  blocks.forEach((block, i) => {
-    if (block.type === "headline") {
+  inputs.forEach((input, i) => {
+    if (input.kind === "headline") {
       slides.push(
         slide(
           i,
           [
             textElement(
               {
-                text: block.text,
+                text: input.text,
                 fontSize: 110,
                 bold: true,
                 x: 120,
@@ -115,20 +119,19 @@ export function buildPro6(blocks: Block[], translationName: string): string {
               uuid(i, 2),
             ),
           ],
-          block.text.slice(0, 40) || "Headline",
+          input.text.slice(0, 40) || "Headline",
         ),
       );
       return;
     }
 
-    const label = referenceLabel(block, translationName);
     slides.push(
       slide(
         i,
         [
           textElement(
             {
-              text: block.verseText ?? "",
+              text: input.text,
               fontSize: 84,
               x: 140,
               y: 80,
@@ -141,7 +144,7 @@ export function buildPro6(blocks: Block[], translationName: string): string {
           ),
           textElement(
             {
-              text: label,
+              text: input.label,
               fontSize: 44,
               x: 140,
               y: SLIDE_H - 200,
@@ -153,7 +156,7 @@ export function buildPro6(blocks: Block[], translationName: string): string {
             uuid(i, 3),
           ),
         ],
-        label,
+        input.label,
       ),
     );
   });
