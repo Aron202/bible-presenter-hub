@@ -207,10 +207,10 @@ function Studio() {
 
       <Tabs defaultValue="builder" className="mx-auto max-w-6xl px-6 py-8">
         <TabsList>
-          <TabsTrigger value="builder">
+          <TabsTrigger value="builder" className="gap-1.5">
             <FileText className="size-4" /> Builder
           </TabsTrigger>
-          <TabsTrigger value="settings">
+          <TabsTrigger value="settings" className="gap-1.5">
             <Settings className="size-4" /> Settings
           </TabsTrigger>
         </TabsList>
