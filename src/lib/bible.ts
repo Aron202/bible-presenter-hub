@@ -1,3 +1,5 @@
+import { bookKey, canonicalOrder, sortByCanon } from "./books";
+
 export type Chapter = { chapter: number; verses: { verse: number; text: string }[] };
 export type Book = { name: string; chapters: Chapter[] };
 export type Translation = { id: string; name: string; books: Book[] };
