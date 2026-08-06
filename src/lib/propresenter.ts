@@ -212,6 +212,10 @@ ${slides.join("\n")}
 ${groupXml}
   </array>
   <array rvXMLIvarName="arrangements"></array>
+  <RVDisplayCycle timeOffset="0" duration="0" selectedMediaTrackIndex="0" loop="false" rvXMLIvarName="displayCycle">
+    <array rvXMLIvarName="timeCues"></array>
+    <array rvXMLIvarName="mediaTracks"></array>
+  </RVDisplayCycle>
 </RVPresentationDocument>`;
 }
 
