@@ -94,44 +94,36 @@ export function mergeBooks(existing: Book[], incoming: Book[]): Book[] {
     for (const chapter of book.chapters) chapters.set(chapter.chapter, chapter);
     target.chapters = [...chapters.values()].sort((a, b) => a.chapter - b.chapter);
   }
-  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "sv"));
+  return sortByCanon([...map.values()]);
 }
 
 export function normalize(value: string) {
   return value.toLocaleLowerCase("sv-SE").replace(/[.\s]/g, "");
 }
 
-const ORDINALS: Record<string, string> = {
-  "1": "första",
-  "2": "andra",
-  "3": "tredje",
-  "4": "fjärde",
-  "5": "femte",
-};
-
-/** "1 Mos" -> "förstamos", "Joh" -> "joh" */
-function expandQuery(name: string) {
-  const trimmed = name.trim();
-  const ordinal = trimmed.match(/^([1-5])\s*(.+)$/);
-  if (ordinal) return normalize(`${ORDINALS[ordinal[1]!]}${ordinal[2]!}`);
-  return normalize(trimmed);
-}
-
 export function findBook(translation: Translation | undefined, name: string): Book | undefined {
   if (!translation) return undefined;
-  const needle = expandQuery(name);
-  if (!needle) return undefined;
+  const key = bookKey(name);
+  if (!key) return undefined;
+
+  // 1. exact key match against the stored book names
+  const direct = translation.books.find((b) => bookKey(b.name) === key);
+  if (direct) return direct;
+
+  // 2. resolve short names ("Apg", "1 Kor", "Höga V") through the canon
+  const order = canonicalOrder(name);
+  if (order !== undefined) {
+    const canonical = translation.books.find((b) => canonicalOrder(b.name) === order);
+    if (canonical) return canonical;
+  }
+
+  // 3. loose fallbacks on the stored names
   return (
-    translation.books.find((b) => normalize(b.name) === needle) ??
-    translation.books.find((b) => normalize(b.name).startsWith(needle) && needle.length >= 3) ??
-    translation.books.find((b) => normalize(b.name).includes(needle) && needle.length >= 3) ??
-    translation.books.find((b) => {
-      const words = b.name.split(/\s+/);
-      const last = normalize(words[words.length - 1]!);
-      return needle.length >= 3 && last.startsWith(needle);
-    })
+    translation.books.find((b) => bookKey(b.name).startsWith(key) && key.length >= 2) ??
+    translation.books.find((b) => bookKey(b.name).includes(key) && key.length >= 3)
   );
 }
+
 
 export function getVerses(
   translation: Translation | undefined,
