@@ -315,7 +315,9 @@ function Studio() {
           </section>
         </TabsContent>
 
-        <TabsContent value="settings" className="mt-6 max-w-2xl space-y-6">
+        <TabsContent value="settings" className="mt-6 space-y-6">
+          <div className="max-w-2xl">
+
           <section className="border-border bg-card rounded-2xl border p-5">
             <h2 className="flex items-center gap-2 text-sm font-semibold tracking-wide uppercase">
               <Library className="text-primary size-4" /> Bible library
