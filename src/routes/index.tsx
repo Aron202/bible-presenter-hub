@@ -24,6 +24,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BlockCard } from "@/components/BlockCard";
+import { ThemeEditor } from "@/components/ThemeEditor";
+
 import {
   countVerses,
   getVerses,
