@@ -374,6 +374,9 @@ function Studio() {
               )}
             </div>
           </section>
+          </div>
+
+
 
           <section className="border-border bg-card rounded-2xl border p-5">
             <h2 className="text-sm font-semibold tracking-wide uppercase">Slide theme editor</h2>
