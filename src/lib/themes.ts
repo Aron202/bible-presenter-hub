@@ -152,3 +152,15 @@ export function saveThemes(themes: SlideTheme[]) {
   if (typeof localStorage === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(themes));
 }
+
+const ACTIVE_KEY = "sermon-slide-active-theme";
+
+export function loadActiveThemeId(): string | null {
+  if (typeof localStorage === "undefined") return null;
+  return localStorage.getItem(ACTIVE_KEY);
+}
+
+export function saveActiveThemeId(id: string) {
+  if (typeof localStorage === "undefined") return;
+  localStorage.setItem(ACTIVE_KEY, id);
+}

@@ -32,7 +32,9 @@ import {
   SLIDE_WIDTH,
   createTextBox,
   createTheme,
+  loadActiveThemeId,
   loadThemes,
+  saveActiveThemeId,
   saveThemes,
   type SlideTheme,
   type TextAlign,
@@ -59,12 +61,26 @@ export function ThemeEditor() {
   const dragRef = useRef<DragState | null>(null);
   const [scale, setScale] = useState(0.3);
 
+  const hydrated = useRef(false);
+
   useEffect(() => {
     const loaded = loadThemes();
     setThemes(loaded);
-    setActiveId(loaded[0]?.id ?? "");
+    setActiveId(loadActiveThemeId() ?? loaded[0]?.id ?? "");
     setSelectedBoxId(loaded[0]?.boxes[0]?.id ?? "");
+    hydrated.current = true;
   }, []);
+
+  // Autosave so edits survive leaving the Settings tab.
+  useEffect(() => {
+    if (!hydrated.current || themes.length === 0) return;
+    saveThemes(themes);
+  }, [themes]);
+
+  useEffect(() => {
+    if (!hydrated.current || !activeId) return;
+    saveActiveThemeId(activeId);
+  }, [activeId]);
 
   useEffect(() => {
     const el = canvasRef.current;
