@@ -24,6 +24,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BlockCard } from "@/components/BlockCard";
+import { ThemeEditor } from "@/components/ThemeEditor";
+
 import {
   countVerses,
   getVerses,
@@ -313,7 +315,9 @@ function Studio() {
           </section>
         </TabsContent>
 
-        <TabsContent value="settings" className="mt-6 max-w-2xl space-y-6">
+        <TabsContent value="settings" className="mt-6 space-y-6">
+          <div className="max-w-2xl">
+
           <section className="border-border bg-card rounded-2xl border p-5">
             <h2 className="flex items-center gap-2 text-sm font-semibold tracking-wide uppercase">
               <Library className="text-primary size-4" /> Bible library
@@ -370,14 +374,21 @@ function Studio() {
               )}
             </div>
           </section>
+          </div>
+
+
 
           <section className="border-border bg-card rounded-2xl border p-5">
-            <h2 className="text-sm font-semibold tracking-wide uppercase">Slide themes</h2>
+            <h2 className="text-sm font-semibold tracking-wide uppercase">Slide theme editor</h2>
             <p className="text-muted-foreground mt-1 text-sm">
-              Verses export with the ProPresenter theme “Standard Bibel”, headlines with “Standard
-              Rubrik”. More options will land here later.
+              Design the structural template used when exporting slides. Verses use “Standard
+              Bibel”, headlines use “Standard Rubrik”.
             </p>
+            <div className="mt-5">
+              <ThemeEditor />
+            </div>
           </section>
+
         </TabsContent>
       </Tabs>
     </div>
