@@ -372,12 +372,16 @@ function Studio() {
           </section>
 
           <section className="border-border bg-card rounded-2xl border p-5">
-            <h2 className="text-sm font-semibold tracking-wide uppercase">Slide themes</h2>
+            <h2 className="text-sm font-semibold tracking-wide uppercase">Slide theme editor</h2>
             <p className="text-muted-foreground mt-1 text-sm">
-              Verses export with the ProPresenter theme “Standard Bibel”, headlines with “Standard
-              Rubrik”. More options will land here later.
+              Design the structural template used when exporting slides. Verses use “Standard
+              Bibel”, headlines use “Standard Rubrik”.
             </p>
+            <div className="mt-5">
+              <ThemeEditor />
+            </div>
           </section>
+
         </TabsContent>
       </Tabs>
     </div>
