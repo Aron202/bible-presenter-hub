@@ -88,21 +88,37 @@ function Studio() {
     let books = library.find((t) => t.id === id)?.books ?? [];
     let parsedBooks = 0;
 
-    for (const file of Array.from(files)) {
-      const text = await file.text();
-      const incoming = parseBibleText(text);
-      parsedBooks += incoming.length;
-      books = mergeBooks(books, incoming);
-    }
+    try {
+      for (const file of Array.from(files)) {
+        const text = await file.text();
+        const incoming = parseBibleText(text);
+        parsedBooks += incoming.length;
+        books = mergeBooks(books, incoming);
+      }
 
-    const next = [
-      ...library.filter((t) => t.id !== id),
-      { id, name: translationName.trim() || "Bible", books },
-    ];
-    persist(next);
-    toast.success(`Imported ${parsedBooks} book section(s)`, {
-      description: `${books.length} books stored locally under “${translationName}”.`,
-    });
+      if (parsedBooks === 0) {
+        toast.error("No Bible chapters found in the selected file(s)", {
+          description: "Expected headers like “JOHANNESEVANGELIET - KAPITEL 3”.",
+        });
+        return;
+      }
+
+      const next = [
+        ...library.filter((t) => t.id !== id),
+        { id, name: translationName.trim() || "Bible", books },
+      ];
+      persist(next);
+      toast.success(`Imported ${parsedBooks} book section(s)`, {
+        description: `${books.length} books stored locally under “${translationName}”.`,
+      });
+    } catch (error) {
+      toast.error("Could not import Bible file", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    } finally {
+      // Allow re-selecting the same file path in the picker.
+      if (fileInput.current) fileInput.current.value = "";
+    }
   };
 
   const runSmartImport = () => {
@@ -155,6 +171,7 @@ function Studio() {
     }
 
     // Each block becomes its own group; verse blocks get one slide per verse.
+    const missingVerses: string[] = [];
     const groups: SlideGroup[] = blocks.map((block) => {
       if (block.type === "headline") {
         return {
@@ -164,11 +181,13 @@ function Studio() {
       }
       const translation = library.find((t) => t.id === block.translationId) ?? library[0];
       const verses = getVerses(translation, block.book, block.chapter, block.from, block.to);
+      const range = `${block.book} ${block.chapter}:${block.from}${
+        block.to > block.from ? `-${block.to}` : ""
+      }`;
+      if (!verses.length) missingVerses.push(range);
       const suffix = translation?.name ? ` (${translation.name})` : "";
       return {
-        name: `${block.book} ${block.chapter}:${block.from}${
-          block.to > block.from ? `-${block.to}` : ""
-        }`,
+        name: range,
         slides: verses.map((verse) => ({
           kind: "verse" as const,
           verseNumber: verse.verse,
@@ -178,8 +197,25 @@ function Studio() {
       };
     });
 
+    const exportable = groups.filter((group) => group.slides.length > 0);
+    if (!exportable.length) {
+      toast.error("Nothing to export", {
+        description:
+          missingVerses.length > 0
+            ? `Verse text missing for: ${missingVerses.slice(0, 3).join(", ")}`
+            : "Add headline text or import a Bible library first.",
+      });
+      return;
+    }
+
+    if (missingVerses.length > 0) {
+      toast.warning(`Skipped ${missingVerses.length} verse block(s) with no library text`, {
+        description: missingVerses.slice(0, 3).join(", "),
+      });
+    }
+
     const name = fileName.trim() || defaultFileName();
-    downloadPro6(buildPro6(groups), `${name.replace(/\.pro6$/i, "")}.pro6`);
+    downloadPro6(buildPro6(exportable), `${name.replace(/\.pro6$/i, "")}.pro6`);
     toast.success(`${name} downloaded`, {
       description: "Drag the file into your ProPresenter playlist.",
     });
