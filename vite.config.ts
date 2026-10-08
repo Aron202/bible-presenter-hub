@@ -12,4 +12,10 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    // Allow phone/remote preview tunnels (e.g. Cloudflare Quick Tunnel).
+    server: {
+      allowedHosts: true,
+    },
+  },
 });
