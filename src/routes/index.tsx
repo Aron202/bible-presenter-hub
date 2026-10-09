@@ -36,7 +36,15 @@ import {
   type Translation,
 } from "@/lib/bible";
 import { newId, smartImport, type Block } from "@/lib/blocks";
-import { buildPro6, defaultFileName, downloadPro6, type SlideGroup } from "@/lib/propresenter";
+import {
+  buildPro6,
+  defaultFileName,
+  downloadPro6,
+  HEADLINE_THEME,
+  VERSE_THEME,
+  type SlideGroup,
+} from "@/lib/propresenter";
+import { findThemeByName, loadThemes } from "@/lib/themes";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -214,8 +222,15 @@ function Studio() {
       });
     }
 
+    const themes = loadThemes();
+    const verseTheme = findThemeByName(themes, VERSE_THEME) ?? themes[0];
+    const headlineTheme = findThemeByName(themes, HEADLINE_THEME) ?? themes[1] ?? themes[0];
+
     const name = fileName.trim() || defaultFileName();
-    downloadPro6(buildPro6(exportable), `${name.replace(/\.pro6$/i, "")}.pro6`);
+    downloadPro6(
+      buildPro6(exportable, { verseTheme, headlineTheme }),
+      `${name.replace(/\.pro6$/i, "")}.pro6`,
+    );
     toast.success(`${name} downloaded`, {
       description: "Drag the file into your ProPresenter playlist.",
     });
@@ -417,8 +432,8 @@ function Studio() {
           <section className="border-border bg-card rounded-2xl border p-5">
             <h2 className="text-sm font-semibold tracking-wide uppercase">Slide theme editor</h2>
             <p className="text-muted-foreground mt-1 text-sm">
-              Design the structural template used when exporting slides. Verses use “Standard
-              Bibel”, headlines use “Standard Rubrik”.
+              Font, size, alignment, and box positions here are written into the ProPresenter
+              export. Verses use “Standard Bibel”, headlines use “Standard Rubrik”.
             </p>
             <div className="mt-5">
               <ThemeEditor />
