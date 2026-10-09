@@ -36,9 +36,10 @@ export function BlockCard({ block, index, library, onChange, onRemove }: Props) 
 
   const book = block.type === "verse" ? findBook(translation, block.book) : undefined;
 
-  const chapters = book?.chapters ?? [];
+  // Always show chapters/verses in numeric order (imported data may be unsorted).
+  const chapters = [...(book?.chapters ?? [])].sort((a, b) => a.chapter - b.chapter);
   const chapter = chapters.find((c) => c.chapter === (block.type === "verse" ? block.chapter : 0));
-  const verses = chapter?.verses ?? [];
+  const verses = [...(chapter?.verses ?? [])].sort((a, b) => a.verse - b.verse);
 
   const preview = useMemo(() => {
     if (block.type !== "verse") return [];

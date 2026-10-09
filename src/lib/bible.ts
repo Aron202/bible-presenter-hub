@@ -6,11 +6,19 @@ export type Translation = { id: string; name: string; books: Book[] };
 
 const STORAGE_KEY = "sermon.bible.library.v1";
 
+export function normalizeLibrary(library: Translation[]): Translation[] {
+  return library.map((translation) => ({
+    ...translation,
+    books: sortByCanon(translation.books.map(sortBookContents)),
+  }));
+}
+
 export function loadLibrary(): Translation[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Translation[]) : [];
+    if (!raw) return [];
+    return normalizeLibrary(JSON.parse(raw) as Translation[]);
   } catch {
     return [];
   }
@@ -18,7 +26,7 @@ export function loadLibrary(): Translation[] {
 
 export function saveLibrary(library: Translation[]) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(library));
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizeLibrary(library)));
 }
 
 const HEADER_LINE = /^=+$/;
@@ -67,12 +75,17 @@ export function parseBibleText(raw: string): Book[] {
     if (lastVerse) lastVerse.text = `${lastVerse.text} ${line}`.trim();
   }
 
-  return [...books.entries()].map(([name, chapters]) => ({
-    name,
-    chapters: [...chapters.entries()]
-      .map(([chapter, verses]) => ({ chapter, verses: verses.sort((a, b) => a.verse - b.verse) }))
-      .sort((a, b) => a.chapter - b.chapter),
-  }));
+  return sortByCanon(
+    [...books.entries()].map(([name, chapters]) =>
+      sortBookContents({
+        name,
+        chapters: [...chapters.entries()].map(([chapter, verses]) => ({
+          chapter,
+          verses,
+        })),
+      }),
+    ),
+  );
 }
 
 function titleCase(value: string) {
@@ -83,20 +96,42 @@ function titleCase(value: string) {
     .join(" ");
 }
 
+/** Numeric chapter/verse order — never rely on import or Map insertion order. */
+export function sortBookContents(book: Book): Book {
+  return {
+    ...book,
+    chapters: [...book.chapters]
+      .map((chapter) => ({
+        ...chapter,
+        chapter: Number(chapter.chapter),
+        verses: [...chapter.verses]
+          .map((verse) => ({ ...verse, verse: Number(verse.verse) }))
+          .sort((a, b) => a.verse - b.verse),
+      }))
+      .sort((a, b) => a.chapter - b.chapter),
+  };
+}
+
 export function mergeBooks(existing: Book[], incoming: Book[]): Book[] {
-  const map = new Map(existing.map((b) => [normalize(b.name), { ...b, chapters: [...b.chapters] }]));
+  const map = new Map(
+    existing.map((b) => {
+      const sorted = sortBookContents(b);
+      return [normalize(sorted.name), { ...sorted, chapters: [...sorted.chapters] }];
+    }),
+  );
   for (const book of incoming) {
-    const key = normalize(book.name);
+    const sortedIncoming = sortBookContents(book);
+    const key = normalize(sortedIncoming.name);
     const target = map.get(key);
     if (!target) {
-      map.set(key, { ...book, chapters: [...book.chapters] });
+      map.set(key, { ...sortedIncoming, chapters: [...sortedIncoming.chapters] });
       continue;
     }
     const chapters = new Map(target.chapters.map((c) => [c.chapter, c]));
-    for (const chapter of book.chapters) chapters.set(chapter.chapter, chapter);
+    for (const chapter of sortedIncoming.chapters) chapters.set(chapter.chapter, chapter);
     target.chapters = [...chapters.values()].sort((a, b) => a.chapter - b.chapter);
   }
-  return sortByCanon([...map.values()]);
+  return sortByCanon([...map.values()].map(sortBookContents));
 }
 
 export function normalize(value: string) {
@@ -137,7 +172,9 @@ export function getVerses(
   const book = findBook(translation, bookName);
   const chap = book?.chapters.find((c) => c.chapter === chapter);
   if (!chap) return [];
-  return chap.verses.filter((v) => v.verse >= from && v.verse <= to);
+  return chap.verses
+    .filter((v) => v.verse >= from && v.verse <= to)
+    .sort((a, b) => a.verse - b.verse);
 }
 
 export function countVerses(library: Translation[]) {
