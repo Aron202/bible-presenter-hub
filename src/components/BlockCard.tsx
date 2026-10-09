@@ -36,9 +36,10 @@ export function BlockCard({ block, index, library, onChange, onRemove }: Props) 
 
   const book = block.type === "verse" ? findBook(translation, block.book) : undefined;
 
-  const chapters = book?.chapters ?? [];
+  // Always show chapters/verses in numeric order (imported data may be unsorted).
+  const chapters = [...(book?.chapters ?? [])].sort((a, b) => a.chapter - b.chapter);
   const chapter = chapters.find((c) => c.chapter === (block.type === "verse" ? block.chapter : 0));
-  const verses = chapter?.verses ?? [];
+  const verses = [...(chapter?.verses ?? [])].sort((a, b) => a.verse - b.verse);
 
   const preview = useMemo(() => {
     if (block.type !== "verse") return [];
@@ -107,7 +108,7 @@ export function BlockCard({ block, index, library, onChange, onRemove }: Props) 
             <div className="space-y-1 sm:col-span-3">
               <Label className="text-muted-foreground text-xs">Bok</Label>
               <Select
-                value={book?.name ?? ""}
+                value={book?.name || undefined}
                 onValueChange={(value) => {
                   const next = findBook(translation, value);
                   const firstChapter = next?.chapters[0];
@@ -121,7 +122,7 @@ export function BlockCard({ block, index, library, onChange, onRemove }: Props) 
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Bok" />
+                  <SelectValue placeholder={translation?.books.length ? "Bok" : "Import a Bible first"} />
                 </SelectTrigger>
                 <SelectContent className="max-h-72">
                   {(translation?.books ?? []).map((b) => (
@@ -136,7 +137,7 @@ export function BlockCard({ block, index, library, onChange, onRemove }: Props) 
             <div className="space-y-1">
               <Label className="text-muted-foreground text-xs">Kapitel</Label>
               <Select
-                value={String(block.chapter)}
+                value={chapters.length ? String(block.chapter) : undefined}
                 onValueChange={(value) => {
                   const nextChapter = Number(value);
                   const first =
@@ -160,7 +161,7 @@ export function BlockCard({ block, index, library, onChange, onRemove }: Props) 
             <div className="space-y-1">
               <Label className="text-muted-foreground text-xs">Från vers</Label>
               <Select
-                value={String(block.from)}
+                value={verses.length ? String(block.from) : undefined}
                 onValueChange={(value) => {
                   const from = Number(value);
                   onChange({ ...block, from, to: Math.max(from, block.to) });
@@ -182,7 +183,7 @@ export function BlockCard({ block, index, library, onChange, onRemove }: Props) 
             <div className="space-y-1">
               <Label className="text-muted-foreground text-xs">Till vers</Label>
               <Select
-                value={String(block.to)}
+                value={verses.some((v) => v.verse === block.to) ? String(block.to) : undefined}
                 onValueChange={(value) => onChange({ ...block, to: Number(value) })}
               >
                 <SelectTrigger>
@@ -204,7 +205,7 @@ export function BlockCard({ block, index, library, onChange, onRemove }: Props) 
           <div className="space-y-1">
             <Label className="text-muted-foreground text-xs">Översättning</Label>
             <Select
-              value={translation?.id ?? ""}
+              value={translation?.id || undefined}
               onValueChange={(value) => onChange({ ...block, translationId: value })}
             >
               <SelectTrigger>

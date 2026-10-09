@@ -48,7 +48,7 @@ const RAW: [string, string[]][] = [
   ["Matteusevangeliet", ["Matt", "Mt", "Matteus"]],
   ["Markusevangeliet", ["Mark", "Mk", "Markus"]],
   ["Lukasevangeliet", ["Luk", "Lk", "Lukas"]],
-  ["Johannesevangeliet", ["Joh", "Jh", "Johannes"]],
+  ["Johannesevangeliet", ["Joh", "Jh", "Johannes", "Johannes Evangelium", "Johannes evangelium"]],
   ["Apostlagärningarna", ["Apg", "Act", "Apostla"]],
   ["Romarbrevet", ["Rom", "Rm"]],
   ["Första Korinthierbrevet", ["1 Kor", "1 Korinthierbrev", "1 Korintierbrevet"]],
